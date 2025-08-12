@@ -19,7 +19,7 @@ export const onUserSignup =  inngest.createFunction(
 
                 }
                 return userObject 
-                // This userObject will be accessible with the variable name 'user'
+                // This userObject will be accessible with the variable name 'user'. And, this will be returned, only if the user exists.
             })
 
             // Note:- These steps are like promises, that is, we'll automatically go to the step-2(the second time where step is defined in the same scope), if the previous step has run successfully.
