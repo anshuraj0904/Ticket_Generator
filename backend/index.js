@@ -13,15 +13,16 @@ app.use(cors())
 
 
 const startServer = async()=>{
-  try {
-     await ConnDB();
-     app.listen(PORT, ()=>{
-        console.log(`Listening on https://localhost:${PORT}`);
+    await ConnDB().then(()=>{
+        app.listen(PORT, ()=>{
+            console.log(`App running on http://localhost:${PORT}`);            
+        })
     })
-  } catch (error) {
-    console.log("❌ Server start aborted due to DB connection failure.");
-    
-  }
+    .catch(e=>{
+        console.error("Connection aborted due to Database Connection Failure!")
+        process.exit(1)
+    })
 }
+     
 
 startServer()
