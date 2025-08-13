@@ -1,9 +1,9 @@
 import {inngest} from "../client.js"
 import User from "../../models/user.model.js"
 import { NonRetriableError } from "inngest"
-import { sendMail } from "../../utlis/mailer.util.js"
+import { sendMail } from "../../utils/mailer.util.js"
 
-export const onUserSignup =  inngest.createFunction(
+export const onUserSignup =  inngest.createFunction( // Note:- Here, we're just creating a function, and not an agent.
     {id:"on-user-signup", retries:2},
     {event: "user/signup"},
 
