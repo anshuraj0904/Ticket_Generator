@@ -39,7 +39,7 @@ Analyze the following support ticket and provide a JSON object with:
 - helpfulNotes: A detailed technical explanation that a moderator can use to solve this issue. Include useful internal or external links, if possible.
 - relatedSkills: An array of relevant skills required to solve the ticket issue(e.g., ["React","MongoDB"] ). 
 
-Respond ONLY in this JSOn format and do not include any ither text or markdown in the answer:
+Respond ONLY in this JSOn format and do not include any other text or markdown in the answer:
 
 {
 "summary": "Short summary of the ticket",
@@ -56,6 +56,7 @@ const rawData = response.output[0].context
 
 try {
     const match = rawData.match(/```json\s*([\s\s]*?)\s*```/i)
+    // This match is just to ensure that, we'll only be sending the {summary:..... relatedSkills} part from whatever output the ai gives.
     const jsonString = match ? match[1] : rawData.trim()
     return JSON.parse(jsonString)
 } catch (e) {
