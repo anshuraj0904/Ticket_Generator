@@ -25,10 +25,10 @@ export const onUserSignup =  inngest.createFunction( // Note:- Here, we're just 
             // Note:- These steps are like promises, that is, we'll automatically go to the step-2(the second time where step is defined in the same scope), if the previous step has run successfully.
             // Let us write our step-2 here.
             await step.run("send-welcome-mail", async()=>{
-                const subject = `Welcome to the app, ${user ? user.name : 'User !' }`
-                const message = `Hi,
-                \n\n
-                Thanks for signing up. We are glad to have you onboard!`
+                const subject = `Welcome to the app!`
+                const message = `Hi, ${user ? user.name : 'User !'}
+\n
+Thanks for signing up. We are glad to have you onboard!`
 
                 await sendMail(user.email, subject, message)
 

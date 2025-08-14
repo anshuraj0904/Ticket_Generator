@@ -6,8 +6,12 @@ import { inngest } from "../inngest/client.js";
 
 export const userSignUp = async (req, res) => {
   try {
-    const { email, password, name, role, skills = [] } = req.body;
-    role = role || "user";
+    const { email, password, name, skills } = req.body;
+    let {role}  = req.body
+    role = role  || "user" 
+
+    console.log("User Details: ", email,password, name, role)
+    
     if (!email || !password || !name) {
       return res.status(400).json({
         message: "Some of the details are missing!",
@@ -17,14 +21,16 @@ export const userSignUp = async (req, res) => {
         return res.status(400).json({
           message: "Please Enter a valid email!",
         });
-      } else {
-        const isUserExisting = User.find({ email });
-        if (isUserExisting) {
+      }
+       else {
+        const isUserExisting = await User.findOne({ email });
+        if (isUserExisting) {         
           return res.status(409).json({
             message: "This user already exists!",
           });
-        } else {
-          const hashed_password = bcrypt.hash(password, 10);
+        } 
+        else {
+          const hashed_password = await bcrypt.hash(password, 10);
           await User.create({
             email,
             password: hashed_password,
@@ -33,7 +39,7 @@ export const userSignUp = async (req, res) => {
             skills,
           });
 
-          const user_details = User.findOne({ email }).select("-password");
+          const user_details = await User.findOne({ email }).select("-password");
 
           // Firing the inngest event:
           await inngest.send({
@@ -77,6 +83,8 @@ export const userLogin = async (req, res) => {
       });
     } else {
       const isPasswordMatching = await bcrypt.compare(password, user.password);
+      console.log(isPasswordMatching);
+      
       if (!isPasswordMatching) {
         return res.status(401).json({
           message: "Enter correct password!",
@@ -90,12 +98,7 @@ export const userLogin = async (req, res) => {
 
         return res
           .status(200)
-          .cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          })
-          .json({ message: "Login Successful!" });
+          .json({ message: "Login Successful!", userDetails: user, token:token  });
       }
     }
   } catch (e) {
@@ -122,7 +125,7 @@ export const userLogout = async (req, res) => {
           return res.status(401).json({ message: "Unauthorized!" });
         }
 
-        res.clearCookie("token"); // Clearing the cookie.
+        // res.clearCookie("token"); // Clearing the cookie.
         return res
           .status(200)
           .json({ message: "User logged out successfully!" });
