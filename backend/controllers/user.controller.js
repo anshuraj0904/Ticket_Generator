@@ -95,10 +95,13 @@ export const userLogin = async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-
+        
+        const userDets = await User.findOne({email}).select("-password")
+        console.log(userDets);
+        
         return res
           .status(200)
-          .json({ message: "Login Successful!", userDetails: user, token:token  });
+          .json({ message: "Login Successful!", userDetails: userDets, token:token  });
       }
     }
   } catch (e) {
