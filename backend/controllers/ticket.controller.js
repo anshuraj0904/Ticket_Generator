@@ -70,19 +70,25 @@ export const getTickets = async (req, res) => {
 export const getTicket = async (req, res) => {
   // This one's for getting the details of one particular ticket.
   const user = req.user;
+
   let ticket;
   try {
     if (user.role !== "user") {
-      ticket = await Ticket.findById(req.params.id).populate("assignedTo", [
-        "email, name",
-      ]);
+      ticket = await Ticket.findById(req.params.id)
+        .select(
+          "title description status createdAt helpfulNotes priority relatedSkills"
+        )
+        .populate("assignedTo", ["email, name"]);
       // We'll be passing the id of the ticket as the param.
     } else {
-      ticket = await Ticket.findOne({ createdBy: user._id, _id: req.params.id })
-        .select("title description status createdAt")
+      ticket = await Ticket.findOne({ createdBy: user.id, _id: req.params.id })
+        .select(
+          "title description status createdAt helpfulNotes priority relatedSkills"
+        )
         .populate("assignedTo", ["email", "name"]);
       // Note:- .select("-abc") will return all fields except the abc, but .select("abc") will return only the abc part of it, so, it can bbe used both ways, that is, for selection and well as for deselection.
     }
+    console.log(ticket);
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
     }
@@ -100,33 +106,41 @@ export const deleteTicket = async (req, res) => {
   const ticketId = req.params.id;
 
   try {
-    const ticketDetail = await Ticket.findById(ticketId).select("status priority").populate("createdBy", "email name");
+    const ticketDetail = await Ticket.findById(ticketId)
+      .select("status priority")
+      .populate("createdBy", "email name");
     if (!ticketDetail) {
       return res.status(404).json({ message: "Ticket does not exist!" });
-    } 
-    else {
+    } else {
       if (user.role === "moderator") {
-        return res.status(403).json({ message: "Moderators cannot delete tickets!" });
-      } 
+        return res
+          .status(403)
+          .json({ message: "Moderators cannot delete tickets!" });
+      }
 
-        if (user.role === "admin" || ticketDetail.createdBy._id.toString() === user.id) {
-          await Ticket.findByIdAndDelete(ticketId);
-          const ticketUser = ticketDetail.createdBy
+      if (
+        user.role === "admin" ||
+        ticketDetail.createdBy._id.toString() === user.id
+      ) {
+        await Ticket.findByIdAndDelete(ticketId);
+        const ticketUser = ticketDetail.createdBy;
 
-          console.log("User Detail:",ticketUser.email,"Ticket Id:",ticketId);
+        console.log("User Detail:", ticketUser.email, "Ticket Id:", ticketId);
 
-          // await inngest.send({
-          //   name: "user/ticketDeletion",
-          //   data: {
-          //     email: ticketUser.email,
-          //     ticketId: ticketId.toString(),
-          //   },
-          // });
-          
-          console.log(`Deleted Ticket: `, ticketDetail);
-          
-          return res.status(200).json({ message: "Ticket Deleted Successfully!" });
-        } 
+        // await inngest.send({
+        //   name: "user/ticketDeletion",
+        //   data: {
+        //     email: ticketUser.email,
+        //     ticketId: ticketId.toString(),
+        //   },
+        // });
+
+        console.log(`Deleted Ticket: `, ticketDetail);
+
+        return res
+          .status(200)
+          .json({ message: "Ticket Deleted Successfully!" });
+      }
     }
   } catch (e) {
     console.error("Error Deleting the Ticket:", e);

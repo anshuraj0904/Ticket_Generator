@@ -54,6 +54,8 @@ function User() {
     }
   }
 
+
+  
   useEffect(() => {
     fetchMyTickets();
   }, []);
@@ -66,7 +68,7 @@ function User() {
         <div className="text-xl font-bold">Welcome {user.name}</div>
       <button
         className="btn btn-primary btn-sm"
-        onClick={() => navigate("/create-ticket")}
+        onClick={() => {navigate("/create-ticket")}}
       >
         + Create Ticket
       </button>
@@ -117,7 +119,7 @@ function User() {
                         <button className="btn btn-info btn-sm" onClick={() => navigate(`/ticket/${ticket._id}`)}>
                         Show Details
                         </button>
-                        <button className="btn btn-warning btn-sm" onClick={() =>deleteTicket(ticket._id)}>
+                        <button className="btn btn-warning btn-sm" onClick={() => deleteTicket(ticket._id)}>
                           Delete
                         </button>
                       </td>
