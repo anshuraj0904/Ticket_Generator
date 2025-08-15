@@ -124,8 +124,6 @@ function Tickets() {
         </div>
       )}
     </div>
-  ;
-
 }
 
 export default Tickets;

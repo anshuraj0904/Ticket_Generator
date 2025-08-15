@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Ticket from "../models/ticket.model.js"
 import bcrypt from "bcrypt";
 import validator from "validator";
 import jwt from "jsonwebtoken";
@@ -7,11 +8,11 @@ import { inngest } from "../inngest/client.js";
 export const userSignUp = async (req, res) => {
   try {
     const { email, password, name, skills } = req.body;
-    let {role}  = req.body
-    role = role  || "user" 
+    let { role } = req.body;
+    role = role || "user";
 
-    console.log("User Details: ", email,password, name, role)
-    
+    console.log("User Details: ", email, password, name, role);
+
     if (!email || !password || !name) {
       return res.status(400).json({
         message: "Some of the details are missing!",
@@ -21,15 +22,13 @@ export const userSignUp = async (req, res) => {
         return res.status(400).json({
           message: "Please Enter a valid email!",
         });
-      }
-       else {
+      } else {
         const isUserExisting = await User.findOne({ email });
-        if (isUserExisting) {         
+        if (isUserExisting) {
           return res.status(409).json({
             message: "This user already exists!",
           });
-        } 
-        else {
+        } else {
           const hashed_password = await bcrypt.hash(password, 10);
           await User.create({
             email,
@@ -39,7 +38,9 @@ export const userSignUp = async (req, res) => {
             skills,
           });
 
-          const user_details = await User.findOne({ email }).select("-password");
+          const user_details = await User.findOne({ email }).select(
+            "-password"
+          );
 
           /* Closing this, as the nodemailer lmit is crossed by us. 
           // Firing the inngest event:
@@ -86,7 +87,7 @@ export const userLogin = async (req, res) => {
     } else {
       const isPasswordMatching = await bcrypt.compare(password, user.password);
       console.log(isPasswordMatching);
-      
+
       if (!isPasswordMatching) {
         return res.status(401).json({
           message: "Enter correct password!",
@@ -97,13 +98,15 @@ export const userLogin = async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-                
-        const userDets = await User.findOne({email}).select("-password")
-        console.log("User Details: ",userDets);
-        
-        return res
-          .status(200)
-          .json({ message: "Login Successful!", userDetails: userDets, token:token  });
+
+        const userDets = await User.findOne({ email }).select("-password");
+        console.log("User Details: ", userDets);
+
+        return res.status(200).json({
+          message: "Login Successful!",
+          userDetails: userDets,
+          token: token,
+        });
       }
     }
   } catch (e) {
@@ -169,12 +172,58 @@ export const userUpdate = async (req, res) => {
   }
 };
 
-export const getAllUserS = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Forbidden!" });
     }
 
-    const user = await User.findOne().select("-password");
-  } catch (error) {}
+    const users = await User.find({ role: { $ne: "admin" } }).select(
+      "-password"
+    );
+
+    if (users) {
+      return res
+        .status(200)
+        .json({ message: "Users fetched successfully", data: users });
+    } else {
+      return res
+        .status(200)
+        .json({ message: "Users fetched successfully", data: [] });
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Error in fetching users" });
+  }
+};
+
+export const getUser = async (req, res) => {
+  const user = req.user;
+  if (user.role !== "admin") {
+    return res.status(403).json({ message: "Forbidden!" });
+  }
+
+  try {
+    const id = req.params.id
+    const userDets = await User.findById(id).select("-password")
+    let ticketLength
+    if(userDets.role === "user")
+    {
+         const myTickets = await Ticket.find({createdBy:id})
+         ticketLength = myTickets.length
+    }
+    else if(userDets.role === "moderator")
+    {
+      const ticketsForMe = await Ticket.find({assignedTo:id})
+      ticketLength = ticketsForMe.length
+    }
+
+    console.log("Ticket-length",ticketLength);
+    
+  
+    return res.status(200).json({data:userDets, ticketLength})
+  } catch (e) {
+    console.error("Error fetching Details!", e)
+    return res.status(500).json({message:"Error fetching user details"})
+  }
 };

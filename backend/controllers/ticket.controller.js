@@ -45,23 +45,25 @@ export const getTickets = async (req, res) => {
 
     if (user.role === "admin") {
       tickets = await Ticket.find({})
-        .populate("assignedTo", ["email", "name"]) // Select only email & name
+        .populate("assignedTo", "name") // Select only email & name
         .sort({ createdAt: -1 }); // Sort at the query level
     } 
     else if(user.role === "user")  {
       tickets = await Ticket.find({ createdBy: user.id })
         .select("title description status createdAt")
-        .populate("assignedTo", ["email", "name"])
+        .populate("assignedTo", "name")
         .sort({ createdAt: -1 });
     }
 
     else if(user.role === "moderator")
       {
-          tickets = await Ticket.find({ assignedTo: user.id })
+        tickets = await Ticket.find({ assignedTo: user.id })
         .select("title description status createdAt createdBy")
+        .populate("createdBy", "name")
         .sort({ createdAt: -1 });
       }
     
+      
     
     if (tickets.length > 0) {
       return res.status(200).json({ data: tickets });
@@ -86,17 +88,18 @@ export const getTicket = async (req, res) => {
         .select(
           "title description status createdAt helpfulNotes priority relatedSkills"
         )
-        .populate("assignedTo", ["email, name"]);
+        .populate("assignedTo", "name")
+        .populate("createdBy", "name");
+
       // We'll be passing the id of the ticket as the param.
     } else {
       ticket = await Ticket.findOne({ createdBy: user.id, _id: req.params.id })
         .select(
           "title description status createdAt helpfulNotes priority relatedSkills"
         )
-        .populate("assignedTo", ["email", "name"]);
+        .populate("assignedTo", "name")
       // Note:- .select("-abc") will return all fields except the abc, but .select("abc") will return only the abc part of it, so, it can bbe used both ways, that is, for selection and well as for deselection.
     }
-    console.log(ticket);
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
     }

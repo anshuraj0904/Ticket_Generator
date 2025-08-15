@@ -43,7 +43,7 @@ function Admin() {
           {/* <button className="btn btn-outline btn-sm">Show All Tickets</button> */}
         </div>
 
-        <button className="btn btn-error btn-sm" onClick={()=>handleLogout(navigate)}>Logout</button>
+        <button className="btn btn-error btn-sm"  onClick={() => handleLogout(navigate)}>Logout</button>
       </header>
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="text-center">
@@ -61,11 +61,11 @@ function Admin() {
         <div className="text-xl font-bold">Welcome Admin</div>
 
         <div className="flex space-x-4">
-          <button className="btn btn-outline btn-sm" onClick={() => prompt("Hello All!")}>Show All Users</button>
+          <button className="btn btn-outline btn-sm" onClick={() => navigate("/show-users")}>Show All Users</button>
           <button className="btn btn-outline btn-sm" onClick={() => navigate("/tickets")}>Show All Tickets</button>
         </div>
 
-        <button className="btn btn-error btn-sm" onClick={handleLogout}>Logout</button>
+        <button className="btn btn-error btn-sm" onClick={()=>handleLogout(navigate)}>Logout</button>
       </header>
 
       {/* Body */}

@@ -13,6 +13,8 @@ import User from './pages/user.jsx'
 import { Toaster } from 'react-hot-toast'
 import Createticket from './pages/createticket.jsx'
 import LandingPage from './pages/landingPage.jsx'
+import Showusers from './pages/showusers.jsx'
+import Userdetails from './pages/userdetails.jsx'
 
 
 createRoot(document.getElementById('root')).render(
@@ -27,6 +29,17 @@ createRoot(document.getElementById('root')).render(
           </CheckAuth>
         }
         />
+        <Route path='/show-users' element={
+          <CheckAuth protectedRoute={true}>
+            <Showusers />
+          </CheckAuth>
+        }/>
+       
+        <Route path='/userdetails/:id' element={
+          <CheckAuth protectedRoute={true}>
+            <Userdetails />
+          </CheckAuth>
+        }/>
 
         <Route path='/' element={
           <CheckAuth protectedRoute={false}>

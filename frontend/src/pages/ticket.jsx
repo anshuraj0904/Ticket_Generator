@@ -8,6 +8,7 @@ const TicketDetailPage = () => {
   const [ticket, setTicket] = useState(null);
   const [skills, setSkills] = useState([]);
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const fetchTicketDetails = async () => {
     try {
@@ -25,6 +26,8 @@ const TicketDetailPage = () => {
       if (response.status === 200) {
         setTicket(data.data);
         setSkills(data.data.relatedSkills || []);
+        console.log(data.data);
+        
       } else {
         toast.error("Failed to fetch ticket details:", data.message);
       }
@@ -68,10 +71,27 @@ const TicketDetailPage = () => {
       <p className="text-gray-700 mb-2">
         <strong>Priority:</strong> {ticket.priority}
       </p>
-      {/* <p className="text-gray-700 mb-2">
+       {user.role === "user" ?  <p className="text-gray-700 mb-2">
         <strong>Assigned To:</strong>
         {ticket.assignedTo ? ticket.assignedTo.name : "Unassigned"}
-      </p> */}
+      </p> : 
+      user.role === "admin" ?
+      <div>
+      <p className="text-gray-700 mb-2 flex-col gap-y-2">
+        <strong>Created By :</strong>
+        {ticket.createdBy ? ticket.createdBy.name : "Unassigned"}
+      </p>
+      <p className="text-gray-700 mb-2">
+        <strong>Assigned To:</strong>
+        {ticket.assignedTo ? ticket.assignedTo.name : "Unassigned"}
+      </p>
+      </div>
+      :
+      <p className="text-gray-700 mb-2">
+        <strong>Created By:</strong>
+        {ticket.createdBy ? ticket.createdBy.name : "Unassigned"}
+      </p>
+    }
       <p className="text-gray-700 mb-2">
         <strong>Helpful Notes:</strong> {ticket.helpfulNotes || "N/A"}
       </p>
