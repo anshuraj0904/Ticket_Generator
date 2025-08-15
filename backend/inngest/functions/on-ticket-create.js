@@ -13,101 +13,104 @@ export const onTickerCreated = inngest.createFunction(
     try {
       const { ticketId } = event.data;
 
-      // Fetching the ticket from the DB.
+      // 1️⃣ Fetch Ticket
       const ticket = await step.run("fetch-ticket", async () => {
         const ticketObject = await Ticket.findById(ticketId);
-
-        if (!ticketObject) {
-          throw new NonRetriableError("Ticket not found!");
-        }
-        return ticketObject; // We'll be getting the ticket's details from here.
+        if (!ticketObject) throw new NonRetriableError("Ticket not found!");
+        return ticketObject;
       });
-      // 2nd Step, wherein we'll be updating the things.
-      // Here, as we won't be returning anything, so, we don't need to store it in any variable.
+
+      // 2️⃣ Update status to TODO
       await step.run("update-ticket-status", async () => {
-        await Ticket.findByIdandUpdate(ticket._id, {
-          status: "TODO",
-        }); // Here, we're just updating the status to TODO for the ticket that we've got.
+        await Ticket.findByIdAndUpdate(ticket._id, { status: "TODO" });
+      });
 
-        // Step-2 is done above.
+      // 3️⃣ AI Processing (OUTSIDE step.run to avoid nested steps)
+      const aiResponse = await analyzeTicket(ticket);
 
-        // Now, we'll be creating the step-3 for further updating the details of the ticket.
-
-        const aiResponse = await analyzeTicket(ticket);
-
-        const relatedSkills = await step.run("ai-processing", async () => {
-          let skills = [];
-
+      // 4️⃣ Update DB with AI results
+      const relatedSkills = await step.run(
+        "update-with-ai-results",
+        async () => {
           if (aiResponse) {
-            await Ticket.findByIdandUpdate(ticket._id, {
-              priority: !["low", "medium", "high"].includes(aiResponse.priority)
-                ? "medium"
-                : aiResponse.priority,
-              // That is, if the priority of aiResponse is not there, or is there but doesn't hhave one of low, medium or high,  we'll put 'medium'. Else, we'll put that value in the priority of ticket.
+            await Ticket.findByIdAndUpdate(ticket._id, {
+              priority: ["low", "medium", "high"].includes(aiResponse.priority)
+                ? aiResponse.priority
+                : "medium",
               helpfulNotes: aiResponse.helpfulNotes,
               status: "IN_PROGRESS",
             });
-            skills = aiResponse.relatedSkills; // We'll be passing the skills to the 4th step.
+
+            let skills = aiResponse.relatedSkills || [];
+
+            // If it's a string, try to parse it
+            if (typeof skills === "string") {
+              try {
+                const parsed = JSON.parse(skills);
+                if (Array.isArray(parsed)) skills = parsed;
+              } catch {
+                skills = skills.split(",").map((s) => s.trim());
+              }
+            }
+            if (skills) {
+              await Ticket.findByIdAndUpdate(ticket._id, {
+                relatedSkills: skills,
+              });
+            } else {
+              await Ticket.findByIdAndUpdate(ticket._id, {
+                relatedSkills: [],
+              });
+            }
+            return skills
           }
+        }
+      );
 
-          return skills;
+      // 5️⃣ Assign ticket
+      const moderator = await step.run("assign-ticket", async () => {
+        let user = await User.findOne({
+          role: "moderator",
+          skills: {
+            $elemMatch: { $regex: relatedSkills.join("|"), $options: "i" },
+          },
         });
-
-        const moderator = await step.run("assign-ticket", async () => {
-          // Here, we'll be using the mongo pipeline.
-          let user = await User.findOne({
-            role: "moderator",
-            skills: {
-              $elemMatch: {
-                $regex: relatedSkills.join("|"),
-                $options: "i",
-              },
-            },
-          });
-          if (!user) {
-            user = await User.findOne({ role: "admin" });
-          }
-
-          // Let us now assign it:
-          await Ticket.findByIdandUpdate(ticket._id, {
-            assignedTo: user?._id || null,
-          });
-          return user;
+        if (!user) {
+          user = await User.findOne({ role: "admin" });
+        }
+        await Ticket.findByIdAndUpdate(ticket._id, {
+          assignedTo: user?._id || null,
         });
-
-        // Let us create another pipe to send an email to the user to whom the task has been assigned.
-        await step.run("send-email-notification", async () => {
-          if (moderator) {
-            const ticketDets = await Ticket.findById(ticketId);
-            const subject = "New Ticket assigned!";
-            const message = `Hey ${moderator.name}, a new has been assigned to you.
-\n\n
-The details are:
-- Title: ${ticketDets.title}
-- Priority: ${ticketDets.priority}`;
-
-            await sendMail(moderator.email, subject, message);
-          }
-        });
-
-        // Let us go one step ahead and let us now notify the user, who created the ticket that, his issue has been passed on to a mod now.
-        await step.run("notify-user", async () => {
-          const userToNotify = await User.findById(ticket.createdBy);
-          const Allskills = moderator.skills;
-
-          const subject = "You ticket got assigned!";
-          const message = `Hey ${userToNotify.name}, we're happy to notfiy that your issue has been assigned to a moderator.
-\n\n
-Here are the details:
-- Name : ${moderator.name} 
-- Role: ${moderator.role}
-- Skills: ${Allskills.join(", ")}`;
-          await sendMail(userToNotify.email, subject, message);
-        });
+        return user;
       });
+
+      /*
+      // 6️⃣ Email notification to moderator
+      await step.run("send-email-notification", async () => {
+        if (moderator) {
+          const ticketDets = await Ticket.findById(ticketId);
+          const subject = "New Ticket assigned!";
+          const message = `Hey ${moderator.name}, a new ticket has been assigned to you.\n\nTitle: ${ticketDets.title}\nPriority: ${ticketDets.priority}`;
+          await sendMail(moderator.email, subject, message);
+        }
+      });
+
+      // 7️⃣ Notify the ticket creator
+      await step.run("notify-user", async () => {
+        const userToNotify = await User.findById(ticket.createdBy);
+        const allSkills = moderator?.skills || [];
+        const subject = "Your ticket got assigned!";
+        const message = `Hey ${
+          userToNotify.name
+        }, your issue has been assigned to ${moderator.name} (${
+          moderator.role
+        }).\nSkills: ${allSkills.join(", ")}`;
+        await sendMail(userToNotify.email, subject, message);
+      });
+      */
+
       return { success: true };
     } catch (e) {
-      console.error("❌ Error running the step!");
+      console.error("❌ Error running the step!", e);
       return { success: false, message: e.message };
     }
   }

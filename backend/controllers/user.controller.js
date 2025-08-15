@@ -41,6 +41,7 @@ export const userSignUp = async (req, res) => {
 
           const user_details = await User.findOne({ email }).select("-password");
 
+          /* Closing this, as the nodemailer lmit is crossed by us. 
           // Firing the inngest event:
           await inngest.send({
             name: "user/signup", // Because, the name of the event in /inngest/functions/on-signup is user/signup
@@ -48,6 +49,7 @@ export const userSignUp = async (req, res) => {
               email, // Remember, we're having const {email} = event.data in our on-signup.js, this is what is there for.
             },
           });
+          */
 
           const token = jwt.sign(
             { id: user_details._id, role: user_details.role },
@@ -95,9 +97,9 @@ export const userLogin = async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-        
+                
         const userDets = await User.findOne({email}).select("-password")
-        console.log(userDets);
+        console.log("User Details: ",userDets);
         
         return res
           .status(200)
@@ -116,7 +118,7 @@ export const userLogin = async (req, res) => {
 // For use logout:
 export const userLogout = async (req, res) => {
   try {
-    const isToken = req.headers.authorization.split(" ")[1];
+    const isToken = req.headers.authorization?.split(" ")[1];
     //Because, the header has "Bearer <JWT_token>", hence, we split it using (" "), and we need the 2nd part so, index =1.
     if (!isToken) {
       return res.status(401).json({

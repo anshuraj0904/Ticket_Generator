@@ -52,13 +52,22 @@ Ticket Information:
 - Title: ${ticket.title}
 - Description: ${ticket.description}`);
 
-const rawData = response.output[0].context
+const rawData = response?.output?.[0]?.content;
+// console.log("Raw Data: ",rawData);
+
 
 try {
-    const match = rawData.match(/```json\s*([\s\s]*?)\s*```/i)
-    // This match is just to ensure that, we'll only be sending the {summary:..... relatedSkills} part from whatever output the ai gives.
-    const jsonString = match ? match[1] : rawData.trim()
-    return JSON.parse(jsonString)
+  if(rawData)
+  {
+    const match = rawData.match(/```json\s*([\s\S]*?)\s*```/i);
+    // console.log("Match: ",match ? match[1] : "No match found!");
+    const jsonString = match ? match[1] : rawData;
+    const cleanString = jsonString.trim();
+    return JSON.parse(cleanString);
+
+  }
+
+    
 } catch (e) {
     console.error("Failed to parse JSON from AI response " + e.message)
     return null

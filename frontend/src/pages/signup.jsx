@@ -56,7 +56,6 @@ function Signup() {
     } finally {
       setLoading(false);
       // navigate("/login"); // Redirect to login after signup
-      console.log("Form submitted:", form);
       form.name = "";
       form.email = "";
       form.password = "";

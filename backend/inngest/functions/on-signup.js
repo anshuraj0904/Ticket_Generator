@@ -15,7 +15,7 @@ export const onUserSignup =  inngest.createFunction( // Note:- Here, we're just 
             const userObject= await User.findOne({email})
                 if(!userObject)
                 {
-                    throw new NonRetriableError("User no loner exists in our Database!") // This NonRetriableerror comes from the inngest itself.
+                    throw new NonRetriableError("User no longer exists in our Database!") // This NonRetriableerror comes from the inngest itself.
 
                 }
                 return userObject 

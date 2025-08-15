@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 function Login() {
 
-  const [form, setForm] = React.useState({email: "", password: ""})
+  const [form, setForm] = useState({email: "", password: ""})
 
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -24,27 +24,23 @@ function Login() {
       })
       const data = await response.json();
 
-      if(response.status === 200){
-        if(data.userDetails.role === "admin"){
-          toast.success("Admin Login Successful!");
-        }
-        else if(data.userDetails.role === "moderator"){
-          toast.success("Moderator Login Successful!");
-        }
-        else{
-          toast.success("User Login Successful!");
-        }
-        // toast.success("Login Successful!");
+      if(response.status === 200){        
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        // navigate("/");
+        localStorage.setItem("user", JSON.stringify(data.userDetails));
+        toast.success(`${data.userDetails.role} Logged in successfully!`)
+        if(data.userDetails.role === "admin"){
+          navigate("/admin");
+        } else if(data.userDetails.role === "moderator"){
+          navigate("/moderator");
+        } else {
+          navigate("/user");
+        }
       }
     } catch (error) {
       toast.error("Login failed: " + error.message);
     }
     finally {
       setLoading(false);
-      console.log("Form submitted:", form);
       form.email = "";
       form.password = "";
     }

@@ -2,7 +2,7 @@ import React from 'react'
 
 function TicketDetailPage() {
   return (
-    <div>Ticket</div>
+    <div>Detail of Ticket-1</div>
   )
 }
 

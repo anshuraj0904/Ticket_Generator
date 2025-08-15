@@ -8,44 +8,65 @@ import Admin from "./pages/admin.jsx"
 import Signup from './pages/signup.jsx'
 import Tickets from './pages/tickets.jsx'
 import TicketDetailPage from './pages/ticket.jsx'
+import Moderator from './pages/moderator.jsx'
+import User from './pages/user.jsx'
 import { Toaster } from 'react-hot-toast'
+import Createticket from './pages/createticket.jsx'
 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true }}>
      <Toaster position="top-center" reverseOrder={false} /> {/* For adding toast notifications.*/}
       <Routes>
         <Route path='/' element={
-          <CheckAuth protected={true}>
+          <CheckAuth protectedRoute={true}>
             <Tickets />
           </CheckAuth>
         }
         />
 
-        <Route path='/tickets/:id' element={
-          <CheckAuth protected={true}>
+        <Route path='/ticket/:id' element={
+          <CheckAuth protectedRoute={true}>
             <TicketDetailPage />
           </CheckAuth>
         }
         />
+        <Route path='/moderator' element={
+          <CheckAuth protectedRoute={true}>
+            <Moderator />
+          </CheckAuth>
+        }/>
+
+        <Route path='/user' element={
+          <CheckAuth protectedRoute={true}>
+            <User />
+          </CheckAuth>
+        }/>
 
         <Route path='/login' element={
-          <CheckAuth protected={false}>
+          <CheckAuth protectedRoute={false}>
           <Login />
           </CheckAuth>
           }
            />
 
+            <Route path='/create-ticket' element={
+          <CheckAuth protectedRoute={true}>
+          <Createticket />
+          </CheckAuth>
+          }
+           />
+
           <Route path='/signup' element={
-            <CheckAuth protected={false}>
+            <CheckAuth protectedRoute={false}>
               <Signup />
             </CheckAuth>
           }
           /> 
 
         <Route path='/admin' element={
-            <CheckAuth protected={true}>
+            <CheckAuth protectedRoute={true}>
               <Admin />
             </CheckAuth>
           }

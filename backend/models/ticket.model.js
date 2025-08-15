@@ -14,8 +14,8 @@ const ticketScema = mongoose.Schema({
          ref:"User",
         default: null
     },
-    priority: String,
-    deadline: Date,
+    priority: {type:String, default:"Mid Level Priority"},
+    deadline: {type:Date,   default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
     helpfulNotes: String,
     relatedSkills: [String],
     createdAt: {type: Date, default:Date.now}

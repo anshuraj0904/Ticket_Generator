@@ -1,30 +1,30 @@
 import Ticket from "../models/ticket.model.js";
 import { inngest } from "../inngest/client.js";
+import User from "../models/user.model.js";
 
 export const createTicket = async (req, res) => {
   const { title, description } = req.body;
   try {
     if (!title || !description) {
-      return res
-        .status(400)
-        .json({
-          message: "Please pass all the required info for raising a ticket!",
-        });
+      return res.status(400).json({
+        message: "Please pass all the required info for raising a ticket!",
+      });
     }
 
     const newTicket = await Ticket.create({
       title,
       description,
-      createdBy: req.user._id.toString,
+      createdBy: req.user?.id,
     });
+    console.log("New Ticket: ", newTicket);
 
     await inngest.send({
       name: "user/ticketCreation",
       data: {
-        ticketId: newTicket._id.toString(),
+        ticketId: newTicket?._id.toString(),
         title,
         description,
-        createdBy: req.user._id.toString(),
+        createdBy: req.user?.id.toString(),
       },
     });
 
@@ -42,23 +42,28 @@ export const getTickets = async (req, res) => {
   try {
     const user = req.user;
     let tickets = [];
+
     if (user.role !== "user") {
-      tickets = await Ticket.find({}).populate(
-        "assignedTo",
-        ["email", "name"].sort({ createdAt: -1 })
-        // Note:- In the tickets model, we've assignedTo:   { type: mongoose.Schema.Types.ObjectId,ref:"User"}.
-        // Here, the populate method will take the _id of the assignedTo, go to User model only(due to ref), and will look out for the asked for details there.
-      );
+      tickets = await Ticket.find({})
+        .populate("assignedTo", "email name") // Select only email & name
+        .sort({ createdAt: -1 }); // Sort at the query level
     } else {
-      tickets = await Ticket.find({ createdBy: user._id })
+      tickets = await Ticket.find({ createdBy: user.id })
         .select("title description status createdAt")
+        .populate("assignedTo", "email name")
         .sort({ createdAt: -1 });
     }
 
-    return res.status(200).json({ data: tickets });
+    // console.log(tickets);
+
+    if (tickets.length > 0) {
+      return res.status(200).json({ data: tickets });
+    } else {
+      return res.status(200).json({ data: [] });
+    }
   } catch (e) {
-    console.error("Error fetching the tickets!" + e.message);
-    return res.status(401).json({ message: "Internal Server Error!" });
+    console.error("Error fetching the tickets now too! " + e.message);
+    return res.status(500).json({ message: "Internal Server Error!" });
   }
 };
 
@@ -87,5 +92,44 @@ export const getTicket = async (req, res) => {
   } catch (error) {
     console.error("Error fetching the ticket!" + e.message);
     return res.status(401).json({ message: "Internal Server Error!" });
+  }
+};
+
+export const deleteTicket = async (req, res) => {
+  const user = req.user;
+  const ticketId = req.params.id;
+
+  try {
+    const ticketDetail = await Ticket.findById(ticketId).select("status priority").populate("createdBy", "email name");
+    if (!ticketDetail) {
+      return res.status(404).json({ message: "Ticket does not exist!" });
+    } 
+    else {
+      if (user.role === "moderator") {
+        return res.status(403).json({ message: "Moderators cannot delete tickets!" });
+      } 
+
+        if (user.role === "admin" || ticketDetail.createdBy._id.toString() === user.id) {
+          await Ticket.findByIdAndDelete(ticketId);
+          const ticketUser = ticketDetail.createdBy
+
+          console.log("User Detail:",ticketUser.email,"Ticket Id:",ticketId);
+
+          // await inngest.send({
+          //   name: "user/ticketDeletion",
+          //   data: {
+          //     email: ticketUser.email,
+          //     ticketId: ticketId.toString(),
+          //   },
+          // });
+          
+          console.log(`Deleted Ticket: `, ticketDetail);
+          
+          return res.status(200).json({ message: "Ticket Deleted Successfully!" });
+        } 
+    }
+  } catch (e) {
+    console.error("Error Deleting the Ticket:", e);
+    return res.status(500).json({ message: "Error Deleting the Ticket!" });
   }
 };
