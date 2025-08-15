@@ -108,6 +108,12 @@ function Login() {
               Sign In
             </button>
           </div>
+          <div className="text-sm mt-2">
+            Don't have an account?{" "}
+            <button  className="link link-primary" onClick={() => navigate("/signup")}>
+              Register here
+            </button>
+            </div>
         </form>
 
       </div>

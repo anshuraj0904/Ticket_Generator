@@ -45,22 +45,23 @@ export const getTickets = async (req, res) => {
 
     if (user.role === "admin") {
       tickets = await Ticket.find({})
-        .populate("assignedTo", "email name") // Select only email & name
+        .populate("assignedTo", ["email", "name"]) // Select only email & name
         .sort({ createdAt: -1 }); // Sort at the query level
-    } else if(user.role === "user") {
+    } 
+    else if(user.role === "user")  {
       tickets = await Ticket.find({ createdBy: user.id })
         .select("title description status createdAt")
-        .populate("assignedTo", "email name")
+        .populate("assignedTo", ["email", "name"])
         .sort({ createdAt: -1 });
     }
+
     else if(user.role === "moderator")
-    {
-      tickets = await Ticket.find({ assignedTo: user.id })
+      {
+          tickets = await Ticket.find({ assignedTo: user.id })
         .select("title description status createdAt createdBy")
-        .populate("assignedTo", "email name")
         .sort({ createdAt: -1 });
-    }
-    // console.log(tickets);
+      }
+    
     
     if (tickets.length > 0) {
       return res.status(200).json({ data: tickets });

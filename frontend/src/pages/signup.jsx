@@ -187,6 +187,15 @@ function Signup() {
                     Sign up
                   </button>
                 </div>
+                <div className="text-sm mt-2">
+                  Already have an account?
+                  <button
+                    className="link link-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Login here
+                  </button>
+                  </div>
               </form>
             </div>
 

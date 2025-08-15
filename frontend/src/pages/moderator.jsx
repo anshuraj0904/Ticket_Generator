@@ -22,7 +22,9 @@ function Moderator() {
       );
       const data = await response.json();
       if (response.status === 200) {
-        setTickets(data.data);
+        setTickets(data.data ? data.data : []);
+        console.log("Fetched Tickets: ", data.data);
+               
         toast.success("Tickets fetched successfully!");
       } else {
         toast.error(data.message || "Failed to fetch tickets!");
@@ -78,14 +80,14 @@ function Moderator() {
       <header className="bg-base-100 shadow-md p-4 flex justify-between items-center">
         <div className="text-xl font-bold">Welcome Moderator, {user.name}</div>
 
-        <div className="flex space-x-4">
+        {/* <div className="flex space-x-4">
           <button
             className="btn btn-outline btn-sm"
             onClick={() => navigate("/tickets")}
           >
             Show All Tickets
           </button>
-        </div>
+        </div> */}
 
         <button className="btn btn-error btn-sm" onClick={()=>handleLogout(navigate)}>
           Logout
