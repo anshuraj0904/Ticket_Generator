@@ -68,10 +68,10 @@ const TicketDetailPage = () => {
       <p className="text-gray-700 mb-2">
         <strong>Priority:</strong> {ticket.priority}
       </p>
-      <p className="text-gray-700 mb-2">
+      {/* <p className="text-gray-700 mb-2">
         <strong>Assigned To:</strong>
         {ticket.assignedTo ? ticket.assignedTo.name : "Unassigned"}
-      </p>
+      </p> */}
       <p className="text-gray-700 mb-2">
         <strong>Helpful Notes:</strong> {ticket.helpfulNotes || "N/A"}
       </p>

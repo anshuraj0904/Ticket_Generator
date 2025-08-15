@@ -43,25 +43,32 @@ export const getTickets = async (req, res) => {
     const user = req.user;
     let tickets = [];
 
-    if (user.role !== "user") {
+    if (user.role === "admin") {
       tickets = await Ticket.find({})
         .populate("assignedTo", "email name") // Select only email & name
         .sort({ createdAt: -1 }); // Sort at the query level
-    } else {
+    } else if(user.role === "user") {
       tickets = await Ticket.find({ createdBy: user.id })
         .select("title description status createdAt")
         .populate("assignedTo", "email name")
         .sort({ createdAt: -1 });
     }
-
+    else if(user.role === "moderator")
+    {
+      tickets = await Ticket.find({ assignedTo: user.id })
+        .select("title description status createdAt createdBy")
+        .populate("assignedTo", "email name")
+        .sort({ createdAt: -1 });
+    }
     // console.log(tickets);
-
+    
     if (tickets.length > 0) {
       return res.status(200).json({ data: tickets });
     } else {
       return res.status(200).json({ data: [] });
     }
-  } catch (e) {
+  }
+  catch (e) {
     console.error("Error fetching the tickets now too! " + e.message);
     return res.status(500).json({ message: "Internal Server Error!" });
   }
