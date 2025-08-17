@@ -13,7 +13,7 @@ import {onTickerCreated} from "./inngest/functions/on-ticket-create.js"
 const app = express()
 dotenv.config()
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
